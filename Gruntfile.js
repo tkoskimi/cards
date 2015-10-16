@@ -11,6 +11,7 @@ module.exports = function( grunt ) {
 
     var directoryConfig = {
         basedir: '~/project/cards/',
+        build: 'build',
         plugins: 'vendor/bin',
         php: 'dev/src/cards',
         reports: 'docs/reports',
@@ -18,20 +19,18 @@ module.exports = function( grunt ) {
     };
 
     grunt.initConfig( {
-        directories: directoryConfig,
-
         phpcs: {
+            options: {
+                bin: '<%= directories.plugins %>/phpcs',
+                standard: 'PSR1'
+            },
             application: {
                 src: [
                     '<%= directories.php %>/**/*.php',
                     '!<%= directories.php %>/bootstrap/cache/**',
-                    '!<%= directories.php %>/vendor/**',
-                    '!<%= directories.php %>/database/**'
+                    '!<%= directories.php %>/database/**',
+                    '!<%= directories.php %>/vendor/**'
                 ]
-            },
-            options: {
-                bin: '<%= directories.plugins %>/phpcs',
-                standard: 'PSR1'
             }
         },
 
@@ -41,29 +40,28 @@ module.exports = function( grunt ) {
             },
             good: [
                 '<%= directories.php %>/**/*.php',
-                '!<%= directories.php %>/vendor/**/*.php'
+                '!<%= directories.php %>/bootstrap/cache/**',
+                '!<%= directories.php %>/database/**',
+                '!<%= directories.php %>/vendor/**'
             ]
         },
 
         phpunit: {
-            classes: {
-                dir: '<%= directories.php %>/tests'
-            },
             options: {
                 bin: '<%= directories.plugins %>/phpunit',
                 bootstrap: '<%= directories.php %>/bootstrap/autoload.php',
                 staticBackup: false,
                 colors: true,
                 noGlobalsBackup: false
+            },
+            classes: {
+                dir: '<%= directories.php %>/tests'
             }
         },
 
         phpmd: {
-            application: {
-                dir: '<%= directories.php %>'
-            },
             options: {
-                bin: '<%= directories.plugins %>/phpmd',
+                bin: '<%= directories.plugins %>/php/phpmd',
                 rulesets: 'codesize,unusedcode,naming',
                 suffixes: 'php',
                 exclude:
@@ -72,6 +70,9 @@ module.exports = function( grunt ) {
                     '*/<%= directories.php %>/vendor',
                 reportFile:
                     '<%= directories.reports %>/phpmd/<%= grunt.template.today("isoDateTime") %>.xml'
+            },
+            application: {
+                dir: '<%= directories.php %>'
             }
         },
 
@@ -79,7 +80,7 @@ module.exports = function( grunt ) {
             dist: {
                 bin: '<%= directories.plugins %>/phpdoc.php',
                 directory: '<%= directories.php %>',
-                target: '<%= directories.doc %>/api',
+                target: '<%= directories.doc %>/api/php',
                 ignore: [
                     '<%= directories.php %>/bootstrap/cache/*',
                     '<%= directories.php %>/database/*',
@@ -88,10 +89,20 @@ module.exports = function( grunt ) {
             }
         },
 
+        clean: {
+            build: [ '<%= directories.build %>' ]
+        },
+
+        copy: {
+            build: {
+                files: [ { expand: true, src: [ 'dev/**' ], dest: '<%= directories.build %>' } ]
+            }
+        },
+
         mkdir: {
             phpmd: {
                 options: {
-                    create: [ '<%= directories.reports %>/phpmd' ]
+                    create: [ '<%= directories.reports %>/php/phpmd' ]
                 }
             }
         },
@@ -103,8 +114,9 @@ module.exports = function( grunt ) {
             target: {
                 command: 'ls'
             }
-        }
+        },
 
+        directories: directoryConfig
     } );
 
     grunt.loadNpmTasks( 'grunt-shell' );
@@ -112,11 +124,18 @@ module.exports = function( grunt ) {
     grunt.loadNpmTasks( 'grunt-phplint' );
     grunt.loadNpmTasks( 'grunt-phpunit' );
     grunt.loadNpmTasks( 'grunt-contrib-clean' );
+    grunt.loadNpmTasks( 'grunt-contrib-copy' );
     grunt.loadNpmTasks( 'grunt-phpcpd' );
     grunt.loadNpmTasks( 'grunt-phpmd' );
     grunt.loadNpmTasks( 'grunt-mkdir' );
 
     grunt.registerTask( 'phpdocs', [ 'phpdocumentor' ] );
     grunt.registerTask( 'mkdir-phpmd', [ 'mkdir:phpmd', 'phpmd' ] );
-    grunt.registerTask( 'default', [ 'phpcs', 'phplint:good', 'phpunit', 'mkdir-phpmd' ] );
+    grunt.registerTask( 'test', [ 'phpunit' ] );
+
+    grunt.registerTask( 'build',
+        [ 'phpcs', 'phplint:good', 'mkdir-phpmd', 'test', 'clean:build', 'copy:build' ] );
+
+    grunt.registerTask( 'default', [ 'build' ] );
+
 };

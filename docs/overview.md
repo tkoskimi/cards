@@ -141,10 +141,15 @@ Create directories with Grunt.
 
 [Installation](https://www.npmjs.com/package/grunt-mkdir)
 
-#### Clean
+#### Grunt-contrib-clean
 Cleans files and folders.
 
 [Installation](https://www.npmjs.com/package/grunt-contrib-clean)
+
+#### Grunt-contrib-copy
+Copies files and folders.
+
+[Installation](https://www.npmjs.com/package/grunt-contrib-copy)
 
 #### Grunt-Shell
 [Installation](https://www.npmjs.com/package/grunt-shell)
